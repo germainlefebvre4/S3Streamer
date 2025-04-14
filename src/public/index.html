@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>S3 Video Streaming</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+    h1 {
+      color: #333;
+      text-align: center;
+    }
+    .container {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .video-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
+    }
+    .video-item {
+      background: white;
+      border-radius: 8px;
+      padding: 15px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    .video-item:hover {
+      transform: translateY(-5px);
+    }
+    .video-name {
+      font-weight: bold;
+      margin-bottom: 8px;
+      word-break: break-all;
+    }
+    .video-container {
+      width: 100%;
+      max-width: 800px;
+      margin: 0 auto;
+      background: #000;
+      border-radius: 8px;
+      overflow: hidden;
+      display: none;
+    }
+    video {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+    .loading {
+      text-align: center;
+      font-size: 18px;
+      margin: 40px 0;
+    }
+    .back-button {
+      background-color: #4CAF50;
+      border: none;
+      color: white;
+      padding: 10px 20px;
+      text-align: center;
+      text-decoration: none;
+      display: none;
+      font-size: 16px;
+      margin: 20px auto;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    .video-details {
+      color: #666;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <h1>S3 Video Streaming</h1>
+
+  <div class="container">
+    <div id="loading" class="loading">Loading videos from S3...</div>
+    
+    <div id="video-list" class="video-list"></div>
+    
+    <div id="video-container" class="video-container">
+      <video id="video-player" controls autoplay></video>
+    </div>
+    
+    <button id="back-button" class="back-button">Back to List</button>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const videoList = document.getElementById('video-list');
+      const videoContainer = document.getElementById('video-container');
+      const videoPlayer = document.getElementById('video-player');
+      const loadingElement = document.getElementById('loading');
+      const backButton = document.getElementById('back-button');
+
+      // Fetch videos from our API
+      const fetchVideos = async () => {
+        try {
+          const response = await fetch('/api/videos');
+          if (!response.ok) {
+            throw new Error('Failed to fetch videos');
+          }
+          const videos = await response.json();
+          
+          if (videos.length === 0) {
+            loadingElement.textContent = 'No videos found in the S3 bucket.';
+            return;
+          }
+          
+          loadingElement.style.display = 'none';
+          
+          // Create video list items
+          videos.forEach(video => {
+            const videoItem = document.createElement('div');
+            videoItem.className = 'video-item';
+            
+            // Extract filename from the key
+            const fileName = video.key.split('/').pop();
+            
+            // Format file size
+            const fileSizeInMB = (video.size / (1024 * 1024)).toFixed(2);
+            
+            // Format date
+            const formattedDate = new Date(video.lastModified).toLocaleDateString();
+            
+            videoItem.innerHTML = `
+              <div class="video-name">${fileName}</div>
+              <div class="video-details">
+                <div>Size: ${fileSizeInMB} MB</div>
+                <div>Modified: ${formattedDate}</div>
+              </div>
+            `;
+            
+            videoItem.addEventListener('click', () => {
+              playVideo(video.streamUrl, fileName);
+            });
+            
+            videoList.appendChild(videoItem);
+          });
+          
+        } catch (error) {
+          console.error('Error fetching videos:', error);
+          loadingElement.textContent = 'Error loading videos. Please try again later.';
+        }
+      };
+
+      // Play selected video
+      const playVideo = (streamUrl, title) => {
+        // Update the video player source
+        videoPlayer.src = streamUrl;
+        
+        // Show the video container and back button, hide the list
+        videoList.style.display = 'none';
+        videoContainer.style.display = 'block';
+        backButton.style.display = 'block';
+        
+        // Set page title to video name
+        document.title = `Playing: ${title} | S3 Video Streaming`;
+      };
+
+      // Handle back button click
+      backButton.addEventListener('click', () => {
+        // Stop video playback
+        videoPlayer.pause();
+        videoPlayer.src = '';
+        
+        // Show the list, hide the video container and back button
+        videoList.style.display = 'grid';
+        videoContainer.style.display = 'none';
+        backButton.style.display = 'none';
+        
+        // Reset page title
+        document.title = 'S3 Video Streaming';
+      });
+
+      // Initialize the app
+      fetchVideos();
+    });
+  </script>
+</body>
+</html>

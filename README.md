@@ -30,7 +30,8 @@ Then edit the `.env` file with your AWS credentials and bucket information:
 AWS_ACCESS_KEY_ID=your_access_key_id
 AWS_SECRET_ACCESS_KEY=your_secret_access_key
 AWS_REGION=your_aws_region
-S3_BUCKET_NAME=your_bucket_name
+AWS_S3_ENDPOINT_URL=https://s3.your_aws_region.amazonaws.com
+AWS_S3_BUCKET_NAME=your_bucket_name
 PORT=3000
 NODE_ENV=development
 ```
