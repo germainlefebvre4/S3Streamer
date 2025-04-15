@@ -7,6 +7,7 @@
   <style>
     body {
       font-family: Arial, sans-serif;
+      /* max-width: 90%; */
       max-width: 1200px;
       margin: 0 auto;
       padding: 20px;
@@ -42,41 +43,105 @@
       margin-bottom: 8px;
       word-break: break-all;
     }
-    .video-container {
-      width: 100%;
-      max-width: 800px;
-      margin: 0 auto;
-      background: #000;
-      border-radius: 8px;
-      overflow: hidden;
-      display: none;
-    }
-    video {
-      width: 100%;
-      height: auto;
-      display: block;
-    }
     .loading {
       text-align: center;
       font-size: 18px;
       margin: 40px 0;
     }
-    .back-button {
-      background-color: #4CAF50;
-      border: none;
-      color: white;
-      padding: 10px 20px;
-      text-align: center;
-      text-decoration: none;
-      display: none;
-      font-size: 16px;
-      margin: 20px auto;
-      cursor: pointer;
-      border-radius: 4px;
-    }
     .video-details {
       color: #666;
       font-size: 14px;
+    }
+    /* New styles for pagination */
+    .pagination {
+      display: flex;
+      justify-content: center;
+      margin-top: 30px;
+      gap: 10px;
+    }
+    .pagination button {
+      padding: 8px 12px;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .pagination button:disabled {
+      background: #cccccc;
+      cursor: not-allowed;
+    }
+    .pagination-info {
+      margin: 0 15px;
+      line-height: 35px;
+    }
+    .page-button {
+      font-weight: normal;
+      background: #f0f0f0;
+      color: #333;
+    }
+    .page-button.active {
+      font-weight: bold;
+      background: #4CAF50;
+      color: white;
+    }
+    /* Full page dialog styles */
+    .video-dialog {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.9);
+      z-index: 1000;
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+    .video-container {
+      width: 90%;
+      max-width: 80%;
+      /* max-width: 1200px; */
+    }
+    .video-player-wrapper {
+      position: relative;
+      width: 100%;
+      padding-top: 56.25%; /* 16:9 aspect ratio */
+    }
+    video {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+    }
+    .video-dialog-header {
+      width: 90%;
+      max-width: 1200px;
+      color: white;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .video-dialog-title {
+      font-size: 22px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .close-button {
+      background: transparent;
+      color: white;
+      font-size: 24px;
+      border: none;
+      cursor: pointer;
+      padding: 10px;
+    }
+    /* Make page not scrollable when dialog open */
+    body.dialog-open {
+      overflow: hidden;
     }
   </style>
 </head>
@@ -85,54 +150,79 @@
 
   <div class="container">
     <div id="loading" class="loading">Loading videos from S3...</div>
-    
+
     <div id="video-list" class="video-list"></div>
-    
-    <div id="video-container" class="video-container">
-      <video id="video-player" controls autoplay></video>
+
+    <div id="pagination" class="pagination"></div>
+  </div>
+
+  <!-- Full page video dialog -->
+  <div id="video-dialog" class="video-dialog">
+    <div class="video-dialog-header">
+      <div id="video-dialog-title" class="video-dialog-title"></div>
+      <button id="close-dialog-button" class="close-button">×</button>
     </div>
-    
-    <button id="back-button" class="back-button">Back to List</button>
+    <div class="video-container">
+      <div class="video-player-wrapper">
+        <video id="video-player" controls autoplay></video>
+      </div>
+    </div>
   </div>
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       const videoList = document.getElementById('video-list');
-      const videoContainer = document.getElementById('video-container');
+      const videoDialog = document.getElementById('video-dialog');
       const videoPlayer = document.getElementById('video-player');
+      const videoDialogTitle = document.getElementById('video-dialog-title');
+      const closeDialogButton = document.getElementById('close-dialog-button');
       const loadingElement = document.getElementById('loading');
-      const backButton = document.getElementById('back-button');
+      const paginationElement = document.getElementById('pagination');
 
-      // Fetch videos from our API
-      const fetchVideos = async () => {
+      // Current pagination state
+      let currentPage = 1;
+      let totalPages = 1;
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.has('page')) {
+        currentPage = parseInt(urlParams.get('page')) || 1;
+      }
+
+      // Fetch videos from our API with pagination
+      const fetchVideos = async (page = 1) => {
         try {
-          const response = await fetch('/api/videos');
+          loadingElement.style.display = 'block';
+          videoList.innerHTML = '';
+          paginationElement.innerHTML = '';
+
+          const response = await fetch(`/api/videos?page=${page}`);
           if (!response.ok) {
             throw new Error('Failed to fetch videos');
           }
-          const videos = await response.json();
-          
+
+          const data = await response.json();
+          const videos = data.videos;
+
           if (videos.length === 0) {
             loadingElement.textContent = 'No videos found in the S3 bucket.';
             return;
           }
-          
+
           loadingElement.style.display = 'none';
-          
+
           // Create video list items
           videos.forEach(video => {
             const videoItem = document.createElement('div');
             videoItem.className = 'video-item';
-            
+
             // Extract filename from the key
             const fileName = video.key.split('/').pop();
-            
+
             // Format file size
             const fileSizeInMB = (video.size / (1024 * 1024)).toFixed(2);
-            
+
             // Format date
             const formattedDate = new Date(video.lastModified).toLocaleDateString();
-            
+
             videoItem.innerHTML = `
               <div class="video-name">${fileName}</div>
               <div class="video-details">
@@ -140,51 +230,125 @@
                 <div>Modified: ${formattedDate}</div>
               </div>
             `;
-            
+
             videoItem.addEventListener('click', () => {
-              playVideo(video.streamUrl, fileName);
+              openVideoDialog(video.streamUrl, fileName);
             });
-            
+
             videoList.appendChild(videoItem);
           });
-          
+
+          // Update pagination
+          updatePagination(data.pagination);
+
+          // Update browser URL with current page
+          updateURLWithPage(page);
+
         } catch (error) {
           console.error('Error fetching videos:', error);
           loadingElement.textContent = 'Error loading videos. Please try again later.';
         }
       };
 
-      // Play selected video
-      const playVideo = (streamUrl, title) => {
+      // Update URL with current page as query parameter
+      const updateURLWithPage = (page) => {
+        if (page === 1) {
+          // Remove page parameter if it's page 1
+          const url = new URL(window.location);
+          url.searchParams.delete('page');
+          window.history.replaceState({}, '', url);
+        } else {
+          const url = new URL(window.location);
+          url.searchParams.set('page', page);
+          window.history.replaceState({}, '', url);
+        }
+      };
+
+      // Create pagination controls
+      const updatePagination = (pagination) => {
+        currentPage = pagination.page;
+        totalPages = pagination.totalPages;
+
+        if (totalPages <= 1) {
+          return; // Don't show pagination for single page
+        }
+
+        // Previous button
+        const prevButton = document.createElement('button');
+        prevButton.textContent = '« Previous';
+        prevButton.disabled = !pagination.hasPrevPage;
+        prevButton.addEventListener('click', () => {
+          if (pagination.hasPrevPage) {
+            fetchVideos(currentPage - 1);
+          }
+        });
+        paginationElement.appendChild(prevButton);
+
+        // Page info
+        const pageInfo = document.createElement('div');
+        pageInfo.className = 'pagination-info';
+        pageInfo.textContent = `Page ${pagination.page} of ${pagination.totalPages}`;
+        paginationElement.appendChild(pageInfo);
+
+        // Next button
+        const nextButton = document.createElement('button');
+        nextButton.textContent = 'Next »';
+        nextButton.disabled = !pagination.hasNextPage;
+        nextButton.addEventListener('click', () => {
+          if (pagination.hasNextPage) {
+            fetchVideos(currentPage + 1);
+          }
+        });
+        paginationElement.appendChild(nextButton);
+      };
+
+      // Open video dialog
+      const openVideoDialog = (streamUrl, title) => {
         // Update the video player source
         videoPlayer.src = streamUrl;
-        
-        // Show the video container and back button, hide the list
-        videoList.style.display = 'none';
-        videoContainer.style.display = 'block';
-        backButton.style.display = 'block';
-        
+        videoDialogTitle.textContent = title;
+
+        // Show the video dialog
+        videoDialog.style.display = 'flex';
+        document.body.classList.add('dialog-open');
+
         // Set page title to video name
         document.title = `Playing: ${title} | S3 Video Streaming`;
       };
 
-      // Handle back button click
-      backButton.addEventListener('click', () => {
+      // Close video dialog
+      const closeVideoDialog = () => {
         // Stop video playback
         videoPlayer.pause();
         videoPlayer.src = '';
-        
-        // Show the list, hide the video container and back button
-        videoList.style.display = 'grid';
-        videoContainer.style.display = 'none';
-        backButton.style.display = 'none';
-        
+
+        // Hide the video dialog
+        videoDialog.style.display = 'none';
+        document.body.classList.remove('dialog-open');
+
         // Reset page title
         document.title = 'S3 Video Streaming';
+      };
+
+      // Close dialog when clicking close button
+      closeDialogButton.addEventListener('click', closeVideoDialog);
+
+      // Also close when clicking outside video (on the dark overlay)
+      videoDialog.addEventListener('click', (event) => {
+        if (event.target === videoDialog) {
+          closeVideoDialog();
+        }
       });
 
-      // Initialize the app
-      fetchVideos();
+      // Close dialog on escape key
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && videoDialog.style.display === 'flex') {
+          closeVideoDialog();
+        }
+      });
+
+      // Initialize the app with the page from URL or default to page 1
+      fetchVideos(currentPage);
     });
   </script>
 </body>
