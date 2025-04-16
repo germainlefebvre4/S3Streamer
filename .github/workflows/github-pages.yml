@@ -28,14 +28,18 @@
             cache-dependency-path: 'docs/pnpm-lock.yaml'
   
         - name: Install dependencies
-          run: pnpm install
+          run: |
+            cd docs/
+            pnpm install
         - name: Build website
-          run: pnpm build
+          run: |
+            cd docs/
+            pnpm build
   
         - name: Upload Build Artifact
           uses: actions/upload-pages-artifact@v3
           with:
-            path: build
+            path: docs/build
   
     deploy:
       name: Deploy to GitHub Pages
