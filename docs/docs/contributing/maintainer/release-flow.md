@@ -1,3 +1,6 @@
+---
+sidebar_position: 2
+---
 # Release Flow
 
 This document describes the release flow for the project. It is intended for maintainers and contributors who are involved in the release process.

@@ -1,3 +1,6 @@
+---
+sidebar_position: 2
+---
 # Pull Requests
 
 Thank you for taking interest in contributing to CV Wonder!

@@ -1,3 +1,6 @@
+---
+sidebar_position: 4
+---
 # Contributor Covenant Code of Conduct
 
 !!! note

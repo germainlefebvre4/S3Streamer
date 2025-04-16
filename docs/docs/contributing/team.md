@@ -1,3 +1,6 @@
+---
+sidebar_position: 100
+---
 # The Team
 
 The core development team is composed of the following members:

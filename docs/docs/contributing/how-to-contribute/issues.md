@@ -1,3 +1,6 @@
+---
+sidebar_position: 1
+---
 # Issues
 
 Thank you for taking interest in contributing to CV Wonder!
