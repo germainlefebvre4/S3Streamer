@@ -29,10 +29,12 @@ runs:
         cache-dependency-path: 'docs/pnpm-lock.yaml'
 
     - name: Install dependencies
+      shell: bash
       run: |
         cd docs/
         pnpm install
     - name: Build website
+      shell: bash
       run: |
         cd docs/
         pnpm build
