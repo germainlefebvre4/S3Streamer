@@ -1,0 +1,452 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   width="1088"
+   height="687.962"
+   viewBox="0 0 1088 687.962"
+   version="1.1"
+   id="svg26"
+   sodipodi:docname="undraw_docusaurus_mountain.svg"
+   inkscape:version="1.4.1 (1:1.4.1+202503302257+93de688d07)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview26"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     showgrid="false"
+     inkscape:zoom="1.1515795"
+     inkscape:cx="589.19076"
+     inkscape:cy="350.38831"
+     inkscape:window-width="2256"
+     inkscape:window-height="1440"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="g29" />
+  <title
+     id="title1">Easy Video Streaming</title>
+  <defs
+     id="defs4">
+    <linearGradient
+       id="linearGradient13"
+       x1="0%"
+       y1="0%"
+       x2="100%"
+       y2="0%">
+      <stop
+         offset="0"
+         style="stop-color:#44d860;stop-opacity:1;"
+         id="stop12" />
+      <stop
+         offset="1"
+         style="stop-color:#0087ca;stop-opacity:1;"
+         id="stop13" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient11"
+       x1="0%"
+       y1="0%"
+       x2="100%"
+       y2="0%">
+      <stop
+         offset="0"
+         style="stop-color:#44d860;stop-opacity:1;"
+         id="stop10" />
+      <stop
+         offset="1"
+         style="stop-color:#0087ca;stop-opacity:1;"
+         id="stop11" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient33"
+       inkscape:collect="always">
+      <stop
+         style="stop-color:#3f3d56;stop-opacity:0;"
+         offset="0.45004827"
+         id="stop34" />
+      <stop
+         style="stop-color:#3f3d56;stop-opacity:1;"
+         offset="0.68531311"
+         id="stop33" />
+    </linearGradient>
+    <linearGradient
+       id="cloudGradient"
+       x1="0%"
+       y1="0%"
+       x2="100%"
+       y2="0%">
+      <stop
+         offset="0%"
+         style="stop-color:#6c63ff;stop-opacity:0.8"
+         id="stop1" />
+      <stop
+         offset="100%"
+         style="stop-color:#3ecc5f;stop-opacity:0.8"
+         id="stop2" />
+    </linearGradient>
+    <linearGradient
+       id="streamGradient"
+       x1="0%"
+       y1="0%"
+       x2="100%"
+       y2="0%">
+      <stop
+         offset="0"
+         style="stop-color:#44d860;stop-opacity:1;"
+         id="stop3" />
+      <stop
+         offset="1"
+         style="stop-color:#0087ca;stop-opacity:1;"
+         id="stop4" />
+    </linearGradient>
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient11"
+       id="linearGradient30"
+       x1="102.83667"
+       y1="249.87197"
+       x2="284.56173"
+       y2="249.87197"
+       gradientTransform="scale(1.4197271,0.70436073)"
+       gradientUnits="userSpaceOnUse" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient13"
+       id="linearGradient31"
+       x1="103.12943"
+       y1="295.05641"
+       x2="282.72899"
+       y2="295.05641"
+       gradientTransform="scale(1.4253933,0.70156076)"
+       gradientUnits="userSpaceOnUse" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#streamGradient"
+       id="linearGradient32"
+       x1="103.40837"
+       y1="340.63006"
+       x2="280.8795"
+       y2="340.63006"
+       gradientTransform="scale(1.4312187,0.69870521)"
+       gradientUnits="userSpaceOnUse" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient33"
+       id="linearGradient34"
+       x1="547.93127"
+       y1="105.87158"
+       x2="547.93127"
+       y2="1213.1035"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(0.9796089,0,0,1,7.699435,-25.182804)" />
+  </defs>
+  <!-- Background shape -->
+  <path
+     d="m 1415.8203,103.50967 c -2.4986,27.52484 -7.6902,49.62396 -14.8162,67.2484 -9.4824,23.48298 -25.702,32.94445 -40.1911,42.84487 a 91.635252,117.82644 0 0 1 -13.0193,7.27899 c -26.3657,11.76588 -55.8748,8.64457 -79.0545,2.43242 a 311.62955,400.69952 0 0 0 -49.351,-8.02274 q -7.0975,-0.41149 -14.2093,-0.40844 c -7.3109,0.0116 -138.95,3.22494 -171.0003,-80.20916 -7.913,-20.58115 -13.337,-45.722331 -15.2856,-76.368491 -5.514,-86.64077 24.7917,-143.54372 63.8827,-180.737309 73.9482,-70.35751 175.3101,-67.4069 248.1679,4.8039 48.5307,48.099879 93.9703,120.8959092 84.8767,221.13756 z"
+     fill="#3f3d56"
+     id="path4"
+     inkscape:label="Background Bubble"
+     style="display:none;fill:#3f3d56;fill-opacity:1;stroke-width:0.537623" />
+  <!-- Cloud shapes (S3 storage) -->
+  <ellipse
+     cx="544.45795"
+     cy="634.30475"
+     rx="542.32733"
+     ry="70.296295"
+     fill="#3f3d56"
+     id="ellipse24"
+     inkscape:label="Background Floor"
+     style="fill:url(#linearGradient34);stroke-width:1.5284" />
+  <ellipse
+     cx="300"
+     cy="180"
+     rx="80"
+     ry="50"
+     fill="url(#cloudGradient)"
+     id="ellipse4"
+     style="display:none" />
+  <ellipse
+     cx="350"
+     cy="160"
+     rx="60"
+     ry="40"
+     fill="url(#cloudGradient)"
+     id="ellipse5"
+     style="display:none" />
+  <ellipse
+     cx="250"
+     cy="160"
+     rx="60"
+     ry="40"
+     fill="url(#cloudGradient)"
+     id="ellipse6"
+     style="display:none" />
+  <!-- S3 bucket label -->
+  <text
+     x="300"
+     y="185"
+     font-family="Arial, sans-serif"
+     font-size="24px"
+     text-anchor="middle"
+     fill="#ffffff"
+     font-weight="bold"
+     id="text6"
+     style="display:none">S3</text>
+  <!-- Video player -->
+  <!-- Play button -->
+  <g
+     id="g26"
+     inkscape:label="Screen"
+     style="display:inline"
+     transform="matrix(2.3786193,0,0,2.3786193,-780.92708,-599.31069)">
+    <rect
+       x="400"
+       y="280"
+       width="320"
+       height="200"
+       rx="10"
+       fill="#ffffff"
+       stroke="#3f3d56"
+       stroke-width="4"
+       id="rect6" />
+    <rect
+       x="400"
+       y="280"
+       width="320"
+       height="30"
+       rx="5"
+       fill="#3f3d56"
+       id="rect7" />
+    <circle
+       cx="415"
+       cy="295"
+       r="5"
+       fill="#ff6584"
+       id="circle7" />
+    <circle
+       cx="430"
+       cy="295"
+       r="5"
+       fill="#ffff50"
+       id="circle8" />
+    <circle
+       cx="445"
+       cy="295"
+       r="5"
+       fill="#44d860"
+       id="circle9" />
+    <circle
+       cx="561.09521"
+       cy="392.04745"
+       r="50"
+       fill="#3ecc5f"
+       opacity="0.8"
+       id="circle10"
+       style="fill:#0087ca;fill-opacity:1" />
+    <polygon
+       points="545,355 545,405 585,380 "
+       fill="#ffffff"
+       id="polygon10"
+       transform="translate(1.0952226,12.047448)" />
+  </g>
+  <!-- Streaming lines -->
+  <g
+     id="g29"
+     inkscape:label="Lines dot"
+     transform="matrix(1.5429285,0,0,1.5429285,-215.39624,-178.58762)">
+    <path
+       d="m 150,180 c 2.79732,2.23786 5.59464,4.44567 8.39196,6.62343 C 238.92798,249.32205 319.46399,287.11424 400,300"
+       stroke="url(#streamGradient)"
+       stroke-width="8"
+       fill="none"
+       stroke-dasharray="15, 10"
+       stroke-linecap="round"
+       id="path10"
+       style="display:inline;stroke:url(#linearGradient30)"
+       sodipodi:nodetypes="csc" />
+    <path
+       d="M 150,210 Q 250,310 400,330"
+       stroke="url(#streamGradient)"
+       stroke-width="6"
+       fill="none"
+       stroke-dasharray="15, 10"
+       stroke-linecap="round"
+       id="path11"
+       style="display:inline;stroke:url(#linearGradient31)" />
+    <path
+       d="m 150,240 q 75,100 250,120"
+       stroke="url(#streamGradient)"
+       stroke-width="4"
+       fill="none"
+       stroke-dasharray="15, 10"
+       stroke-linecap="round"
+       id="path12"
+       style="display:inline;stroke:url(#linearGradient32)" />
+  </g>
+  <!-- Document/configuration icon representing easy setup -->
+  <g
+     id="g27"
+     inkscape:label="File"
+     transform="translate(213.38721,186.82828)"
+     style="display:none">
+    <rect
+       x="700"
+       y="180"
+       width="100"
+       height="130"
+       rx="5"
+       fill="#ffffff"
+       stroke="#3f3d56"
+       stroke-width="2"
+       id="rect12" />
+    <line
+       x1="720"
+       y1="210"
+       x2="780"
+       y2="210"
+       stroke="#3f3d56"
+       stroke-width="2"
+       id="line12" />
+    <line
+       x1="720"
+       y1="230"
+       x2="780"
+       y2="230"
+       stroke="#3f3d56"
+       stroke-width="2"
+       id="line13" />
+    <line
+       x1="720"
+       y1="250"
+       x2="750"
+       y2="250"
+       stroke="#3f3d56"
+       stroke-width="2"
+       id="line14" />
+  </g>
+  <!-- Small devices indicating multi-device streaming -->
+  <g
+     id="g30"
+     inkscape:label="Icone screen S"
+     style="display:none"
+     transform="translate(163.93266,-167.59596)">
+    <rect
+       x="700"
+       y="350"
+       width="50"
+       height="30"
+       rx="3"
+       fill="#ffffff"
+       stroke="#3f3d56"
+       stroke-width="2"
+       id="rect15"
+       style="display:inline" />
+    <rect
+       x="703"
+       y="353"
+       width="44"
+       height="20"
+       rx="1"
+       fill="#3f3d56"
+       opacity="0.2"
+       id="rect16" />
+  </g>
+  <g
+     id="g28"
+     inkscape:label="Icone screen L"
+     style="display:none"
+     transform="translate(100.74074,-63.191919)">
+    <rect
+       x="770"
+       y="340"
+       width="80"
+       height="50"
+       rx="3"
+       fill="#ffffff"
+       stroke="#3f3d56"
+       stroke-width="2"
+       id="rect17" />
+    <rect
+       x="775"
+       y="345"
+       width="70"
+       height="35"
+       rx="1"
+       fill="#3f3d56"
+       opacity="0.2"
+       id="rect18" />
+  </g>
+  <!-- Decorative elements -->
+  <rect
+     x="698.93604"
+     y1="270"
+     width="81.063972"
+     height="27.021324"
+     rx="6.755331"
+     fill="#44d860"
+     id="rect14"
+     y="0"
+     style="display:none;stroke-width:1.35107" />
+  <circle
+     cx="150"
+     cy="450"
+     r="3"
+     fill="#f2f2f2"
+     id="circle18"
+     style="display:none" />
+  <circle
+     cx="800"
+     cy="200"
+     r="3"
+     fill="#f2f2f2"
+     id="circle19"
+     style="display:none" />
+  <circle
+     cx="250"
+     cy="500"
+     r="3"
+     fill="#f2f2f2"
+     id="circle20"
+     style="display:none" />
+  <circle
+     cx="600"
+     cy="150"
+     r="3"
+     fill="#f2f2f2"
+     id="circle21"
+     style="display:none" />
+  <circle
+     cx="750"
+     cy="450"
+     fill="#f2f2f2"
+     id="circle22"
+     style="display:none"
+     r="3" />
+  <circle
+     cx="900"
+     cy="350"
+     r="3"
+     fill="#f2f2f2"
+     id="circle23"
+     style="display:none" />
+  <path
+     d="m 477.06939,643.98228 h -2.76 v -2.76 h -1.48 v 2.76 h -2.76 v 1.478 h 2.76 v 2.759 h 1.48 v -2.759 h 2.76 z"
+     fill="#f2f2f2"
+     id="path23"
+     style="display:none" />
+  <path
+     d="m 804.95623,647.68328 h -2.76 v -2.76 h -1.48 v 2.76 h -2.76 v 1.478 h 2.76 v 2.759 h 1.48 v -2.759 h 2.76 z"
+     fill="#f2f2f2"
+     id="path24"
+     style="display:none" />
+  <!-- Base/ground -->
+  <!-- Caption text -->
+</svg>

@@ -1,0 +1,16 @@
+---
+sidebar_position: 1
+---
+
+# Presentation
+
+S3 Streamer is a powerful tool designed to facilitate the streaming of video content directly from Amazon S3 buckets.
+It provides a seamless experience for users looking to access and play videos stored in S3, making it an ideal solution for developers and content creators alike.
+This documentation will guide you through the installation, configuration, and usage of S3 Streamer, ensuring you can make the most of its features and capabilities.
+
+## Key Features
+
+- **AWS S3**: Seamlessly stream data from Amazon S3 buckets.
+- **Listing**: List all available videos in your S3 bucket.
+- **Video Player**: Built-in video player for easy playback of streamed content.
+- **Compatibility**: Usable with S3-compatible storage solutions.
