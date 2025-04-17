@@ -2,7 +2,7 @@
   name: Deploy to GitHub Pages
   
   on:
-    push:
+    pull_request:
       branches:
         - main
       paths:
@@ -22,21 +22,3 @@
           with:
             token: ${{ secrets.GH_PAT }}
             branch: ${{ github.head_ref || github.ref_name }}
-
-    deploy:
-      name: Deploy to GitHub Pages
-      needs: build
-  
-      permissions:
-        pages: write
-        id-token: write
-  
-      environment:
-        name: github-pages
-        url: ${{ steps.deployment.outputs.page_url }}
-  
-      runs-on: ubuntu-latest
-      steps:
-        - name: Deploy to GitHub Pages
-          id: deployment
-          uses: actions/deploy-pages@v4

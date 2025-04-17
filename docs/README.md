@@ -1,41 +1,24 @@
-# Website
+# S3 Streamer - Documentation
 
 This website is built using [Docusaurus](https://docusaurus.io/), a modern static website generator.
 
-### Installation
+## Getting Started
 
 ```
-$ yarn
+pnpm install
+pnpm start
 ```
 
-### Local Development
+Open your browser and navigate to `http://localhost:3000/S3Streamer/` to see your documentation site.
 
-```
-$ yarn start
-```
+## Development
 
-This command starts a local development server and opens up a browser window. Most changes are reflected live without having to restart the server.
+### Landing page
 
-### Build
+The landing page is located in the `src/pages/index.tsx` file.
+You can edit this file to change the content of the landing page.
 
-```
-$ yarn build
-```
+### Documentation pages
 
-This command generates static content into the `build` directory and can be served using any static contents hosting service.
-
-### Deployment
-
-Using SSH:
-
-```
-$ USE_SSH=true yarn deploy
-```
-
-Not using SSH:
-
-```
-$ GIT_USER=<Your GitHub username> yarn deploy
-```
-
-If you are using GitHub pages for hosting, this command is a convenient way to build the website and push to the `gh-pages` branch.
+S3 Streamer documentation uses Docusaurus Pages part to create the documentation pages.
+The pages are located in the `docs` directory.

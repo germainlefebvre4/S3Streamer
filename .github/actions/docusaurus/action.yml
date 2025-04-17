@@ -1,0 +1,45 @@
+---
+name: Fetch and build Docs
+description: Fetch and build the docs
+inputs:
+  token:
+    description: 'The token to use for fetching the repository'
+    required: true
+  branch:
+    description: 'The branch to fetch for docs content'
+    required: false
+    default: 'main'
+
+runs:
+  using: 'composite'
+  steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    - uses: pnpm/action-setup@v4
+      name: Install pnpm
+      with:
+        run_install: false
+
+    - name: Install Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 22
+        cache: 'pnpm'
+        cache-dependency-path: 'docs/pnpm-lock.yaml'
+
+    - name: Install dependencies
+      shell: bash
+      run: |
+        cd docs/
+        pnpm install
+    - name: Build website
+      shell: bash
+      run: |
+        cd docs/
+        pnpm build
+
+    - name: Upload Build Artifact
+      uses: actions/upload-pages-artifact@v3
+      with:
+        path: docs/build
