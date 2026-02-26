@@ -79,6 +79,14 @@
     .config-btn:hover {
       background: #e8e8e8;
     }
+    .config-btn.active {
+      background: #4CAF50;
+      color: white;
+      border-color: #388e3c;
+    }
+    .config-btn.active:hover {
+      background: #43a047;
+    }
     /* Search field */
     .search-container {
       display: flex;
@@ -309,6 +317,7 @@
       <div class="search-container">
         <input type="text" id="search-input" class="search-input" placeholder="Rechercher une vidéo…">
       </div>
+      <button id="shuffle-btn" class="config-btn" title="Mode aléatoire">🔀</button>
       <button id="config-btn" class="config-btn" title="Configuration de la grille">⚙</button>
     </div>
 
@@ -391,6 +400,7 @@
       const configApplyBtn = document.getElementById('config-apply');
       const configCancelBtn = document.getElementById('config-cancel');
       const configWidthSelect = document.getElementById('config-width');
+      const shuffleBtn = document.getElementById('shuffle-btn');
 
       // Grid config: defaults, localStorage and CSS init
       const GRID_CONFIG_KEY = 's3streamer_grid_config';
@@ -415,6 +425,7 @@
       let currentPage = 1;
       let totalPages = 1;
       let currentSearch = '';
+      let shuffleMode = false;
       const urlParams = new URLSearchParams(window.location.search);
       if (urlParams.has('page')) {
         currentPage = parseInt(urlParams.get('page')) || 1;
@@ -433,6 +444,7 @@
 
           const params = new URLSearchParams({ page, pageSize: gridConfig.cols * gridConfig.rows });
           if (currentSearch) params.set('search', currentSearch);
+          if (shuffleMode) params.set('shuffle', 'true');
           const response = await fetch(`/api/videos?${params}`);
           if (!response.ok) {
             throw new Error('Failed to fetch videos');
@@ -526,10 +538,25 @@
         return result;
       };
 
+      // Shuffle toggle
+      shuffleBtn.addEventListener('click', () => {
+        shuffleMode = !shuffleMode;
+        shuffleBtn.classList.toggle('active', shuffleMode);
+        fetchVideos(1);
+      });
+
       // Create pagination controls
       const updatePagination = (pagination) => {
         currentPage = pagination.page;
         totalPages = pagination.totalPages;
+
+        if (shuffleMode) {
+          const rerollBtn = document.createElement('button');
+          rerollBtn.textContent = '🔀 Nouveau tirage';
+          rerollBtn.addEventListener('click', () => fetchVideos(1));
+          paginationElement.appendChild(rerollBtn);
+          return;
+        }
 
         if (totalPages <= 1) {
           return; // Don't show pagination for single page

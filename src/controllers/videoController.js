@@ -75,36 +75,34 @@ export const listVideos = async (req, res) => {
       ? videos.filter(item => item.Key.toLowerCase().includes(search))
       : videos;
 
-    // Calculate pagination from filtered results
     const totalVideos = filteredVideos.length;
-    const totalPages = Math.ceil(totalVideos / pageSize);
-    const startIndex = (page - 1) * pageSize;
-    const endIndex = Math.min(startIndex + pageSize, totalVideos);
-    const paginatedVideos = filteredVideos.slice(startIndex, endIndex);
+    const shuffle = req.query.shuffle === 'true';
 
-    // Generate presigned URLs for each video (valid for 1 hour)
+    let paginatedVideos;
+    let pagination;
+
+    if (shuffle) {
+      const shuffled = [...filteredVideos];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      paginatedVideos = shuffled.slice(0, pageSize);
+      pagination = { page: 1, pageSize, totalPages: 1, totalVideos, hasNextPage: false, hasPrevPage: false };
+    } else {
+      const totalPages = Math.ceil(totalVideos / pageSize);
+      const startIndex = (page - 1) * pageSize;
+      const endIndex = Math.min(startIndex + pageSize, totalVideos);
+      paginatedVideos = filteredVideos.slice(startIndex, endIndex);
+      pagination = { page, pageSize, totalPages, totalVideos, hasNextPage: page < totalPages, hasPrevPage: page > 1 };
+    }
+
     const videosWithUrls = await Promise.all(paginatedVideos.map(async (video) => {
       const streamUrl = `/api/videos/stream/${encodeURIComponent(video.Key)}`;
-
-      return {
-        key: video.Key,
-        size: video.Size,
-        lastModified: video.LastModified,
-        streamUrl
-      };
+      return { key: video.Key, size: video.Size, lastModified: video.LastModified, streamUrl };
     }));
 
-    res.json({
-      videos: videosWithUrls,
-      pagination: {
-        page,
-        pageSize,
-        totalPages,
-        totalVideos,
-        hasNextPage: page < totalPages,
-        hasPrevPage: page > 1
-      }
-    });
+    res.json({ videos: videosWithUrls, pagination });
   } catch (error) {
     console.error('Error listing videos:', error);
     res.status(500).json({ error: 'Failed to list videos' });
