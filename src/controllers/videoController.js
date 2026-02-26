@@ -111,6 +111,67 @@ export const listVideos = async (req, res) => {
   }
 };
 
+const STOPWORDS = new Set([
+  'a', 'an', 'the', 'in', 'on', 'at', 'de', 'du', 'le', 'la', 'les',
+  'un', 'une', 'et', 'en', 'au', 'aux', 'par', 'and', 'or', 'of',
+  'to', 'for', 'is', 'it', 'be', 'by', 'des', 'qui', 'que', 'avec',
+  'nfo', 'from', 'torrent', 'sample', 'part', 'prt', 'x264', 'h264',
+  'all', '720p', '1080p', '2160p', '4k', '8k', 'hdr', 'downloaded',
+]);
+const VIDEO_EXTENSIONS = new Set(['mp4', 'mov', 'avi', 'mkv', 'webm']);
+
+const extractTags = (contents) => {
+  const wordCounts = new Map();
+
+  for (const item of contents) {
+    const fileName = item.Key.split('/').pop();
+    const tokens = fileName.toLowerCase().split(/[^a-z0-9]+/);
+    const seen = new Set();
+    for (const token of tokens) {
+      if (token.length < 3) continue;
+      if (/^\d+$/.test(token)) continue;
+      if (STOPWORDS.has(token)) continue;
+      if (VIDEO_EXTENSIONS.has(token)) continue;
+      if (!seen.has(token)) {
+        seen.add(token);
+        wordCounts.set(token, (wordCounts.get(token) ?? 0) + 1);
+      }
+    }
+  }
+
+  return [...wordCounts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 100)
+    .map(([word, count]) => ({ word, count }));
+};
+
+export const listTags = async (req, res) => {
+  try {
+    if (!cachedContents || Date.now() >= cacheExpiresAt) {
+      cachedContents = [];
+      let continuationToken = undefined;
+      let isTruncated = true;
+      while (isTruncated) {
+        const command = new ListObjectsV2Command({
+          Bucket: BUCKET_NAME,
+          Prefix: '',
+          MaxKeys: 1000,
+          ContinuationToken: continuationToken
+        });
+        const response = await s3Client.send(command);
+        cachedContents.push(...(response.Contents ?? []));
+        isTruncated = response.IsTruncated ?? false;
+        continuationToken = response.NextContinuationToken;
+      }
+      cacheExpiresAt = Date.now() + CACHE_TTL_MS;
+    }
+    res.json({ tags: extractTags(cachedContents) });
+  } catch (error) {
+    console.error('Error listing tags:', error);
+    res.status(500).json({ error: 'Failed to list tags' });
+  }
+};
+
 // Stream video using range requests for seeking support
 export const streamVideo = async (req, res) => {
   const key = decodeURIComponent(req.params.key);
