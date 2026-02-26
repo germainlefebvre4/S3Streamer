@@ -23,34 +23,64 @@ const s3Client = new S3Client(s3ClientOptions);
 
 const BUCKET_NAME = process.env.AWS_S3_BUCKET_NAME;
 const DEFAULT_PAGE_SIZE = 18;
+const CACHE_TTL_MS = (parseInt(process.env.CACHE_TTL_SECONDS) || 300) * 1000;
+
+let cachedContents = null;
+let cacheExpiresAt = 0;
 
 // List all videos in the bucket with pagination
 export const listVideos = async (req, res) => {
   try {
-    // Extract pagination parameters from query
+    // Extract pagination and search parameters from query
     const page = parseInt(req.query.page) || 1;
     const pageSize = parseInt(req.query.pageSize) || DEFAULT_PAGE_SIZE;
+    const search = (req.query.search || '').trim().toLowerCase();
 
-    const command = new ListObjectsV2Command({
-      Bucket: BUCKET_NAME,
-      Prefix: '',
-      MaxKeys: 1000 // Get a large number to filter locally
-    });
+    // Use cached S3 object list if still valid, otherwise fetch from S3
+    let allContents;
+    if (cachedContents && Date.now() < cacheExpiresAt) {
+      allContents = cachedContents;
+    } else {
+      // Fetch all objects from S3, following continuation tokens for buckets > 1000 objects
+      allContents = [];
+      let continuationToken = undefined;
+      let isTruncated = true;
 
-    const { Contents, NextContinuationToken, IsTruncated } = await s3Client.send(command);
+      while (isTruncated) {
+        const command = new ListObjectsV2Command({
+          Bucket: BUCKET_NAME,
+          Prefix: '',
+          MaxKeys: 1000,
+          ContinuationToken: continuationToken
+        });
+
+        const response = await s3Client.send(command);
+        allContents.push(...(response.Contents ?? []));
+        isTruncated = response.IsTruncated ?? false;
+        continuationToken = response.NextContinuationToken;
+      }
+
+      cachedContents = allContents;
+      cacheExpiresAt = Date.now() + CACHE_TTL_MS;
+    }
 
     // Filter for video files using common video extensions
     const videoExtensions = ['.mp4', '.mov', '.avi', '.mkv', '.webm'];
-    const videos = Contents?.filter(item => 
+    const videos = allContents.filter(item =>
       videoExtensions.some(ext => item.Key.toLowerCase().endsWith(ext))
-    ) || [];
+    );
 
-    // Calculate pagination
-    const totalVideos = videos.length;
+    // Apply search filter (case-insensitive substring match on S3 key)
+    const filteredVideos = search
+      ? videos.filter(item => item.Key.toLowerCase().includes(search))
+      : videos;
+
+    // Calculate pagination from filtered results
+    const totalVideos = filteredVideos.length;
     const totalPages = Math.ceil(totalVideos / pageSize);
     const startIndex = (page - 1) * pageSize;
     const endIndex = Math.min(startIndex + pageSize, totalVideos);
-    const paginatedVideos = videos.slice(startIndex, endIndex);
+    const paginatedVideos = filteredVideos.slice(startIndex, endIndex);
 
     // Generate presigned URLs for each video (valid for 1 hour)
     const videosWithUrls = await Promise.all(paginatedVideos.map(async (video) => {

@@ -52,6 +52,25 @@
       color: #666;
       font-size: 14px;
     }
+    /* Search field */
+    .search-container {
+      display: flex;
+      justify-content: center;
+    }
+    .search-input {
+      width: 100%;
+      max-width: 500px;
+      padding: 10px 15px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      outline: none;
+      box-sizing: border-box;
+    }
+    .search-input:focus {
+      border-color: #4CAF50;
+      box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+    }
     /* New styles for pagination */
     .pagination {
       display: flex;
@@ -70,6 +89,11 @@
     .pagination button:disabled {
       background: #cccccc;
       cursor: not-allowed;
+    }
+    .pagination-ellipsis {
+      line-height: 35px;
+      padding: 0 4px;
+      color: #666;
     }
     .pagination-info {
       margin: 0 15px;
@@ -151,9 +175,13 @@
   <div class="container">
     <div id="loading" class="loading">Loading videos from S3...</div>
 
-    <div id="video-list" class="video-list"></div>
+    <div class="search-container">
+      <input type="text" id="search-input" class="search-input" placeholder="Rechercher une vidéo…">
+    </div>
 
     <div id="pagination" class="pagination"></div>
+
+    <div id="video-list" class="video-list"></div>
   </div>
 
   <!-- Full page video dialog -->
@@ -178,13 +206,19 @@
       const closeDialogButton = document.getElementById('close-dialog-button');
       const loadingElement = document.getElementById('loading');
       const paginationElement = document.getElementById('pagination');
+      const searchInput = document.getElementById('search-input');
 
-      // Current pagination state
+      // Current state
       let currentPage = 1;
       let totalPages = 1;
+      let currentSearch = '';
       const urlParams = new URLSearchParams(window.location.search);
       if (urlParams.has('page')) {
         currentPage = parseInt(urlParams.get('page')) || 1;
+      }
+      if (urlParams.has('search')) {
+        currentSearch = urlParams.get('search') || '';
+        searchInput.value = currentSearch;
       }
 
       // Fetch videos from our API with pagination
@@ -194,7 +228,9 @@
           videoList.innerHTML = '';
           paginationElement.innerHTML = '';
 
-          const response = await fetch(`/api/videos?page=${page}`);
+          const params = new URLSearchParams({ page });
+          if (currentSearch) params.set('search', currentSearch);
+          const response = await fetch(`/api/videos?${params}`);
           if (!response.ok) {
             throw new Error('Failed to fetch videos');
           }
@@ -250,18 +286,41 @@
         }
       };
 
-      // Update URL with current page as query parameter
+      // Update URL with current page and search as query parameters
       const updateURLWithPage = (page) => {
+        const url = new URL(window.location);
         if (page === 1) {
-          // Remove page parameter if it's page 1
-          const url = new URL(window.location);
           url.searchParams.delete('page');
-          window.history.replaceState({}, '', url);
         } else {
-          const url = new URL(window.location);
           url.searchParams.set('page', page);
-          window.history.replaceState({}, '', url);
         }
+        if (currentSearch) {
+          url.searchParams.set('search', currentSearch);
+        } else {
+          url.searchParams.delete('search');
+        }
+        window.history.replaceState({}, '', url);
+      };
+
+      // Build the list of page numbers/ellipses to display
+      const getPageNumbers = (current, total) => {
+        if (total <= 5) {
+          return Array.from({ length: total }, (_, i) => i + 1);
+        }
+        const delta = 2;
+        const pages = new Set([1, total]);
+        for (let i = current - delta; i <= current + delta; i++) {
+          if (i >= 1 && i <= total) pages.add(i);
+        }
+        const sorted = [...pages].sort((a, b) => a - b);
+        const result = [];
+        let prev = null;
+        for (const p of sorted) {
+          if (prev !== null && p - prev > 1) result.push('…');
+          result.push(p);
+          prev = p;
+        }
+        return result;
       };
 
       // Create pagination controls
@@ -278,26 +337,33 @@
         prevButton.textContent = '« Previous';
         prevButton.disabled = !pagination.hasPrevPage;
         prevButton.addEventListener('click', () => {
-          if (pagination.hasPrevPage) {
-            fetchVideos(currentPage - 1);
-          }
+          if (pagination.hasPrevPage) fetchVideos(currentPage - 1);
         });
         paginationElement.appendChild(prevButton);
 
-        // Page info
-        const pageInfo = document.createElement('div');
-        pageInfo.className = 'pagination-info';
-        pageInfo.textContent = `Page ${pagination.page} of ${pagination.totalPages}`;
-        paginationElement.appendChild(pageInfo);
+        // Numbered page buttons with ellipses
+        getPageNumbers(currentPage, totalPages).forEach(item => {
+          if (item === '…') {
+            const ellipsis = document.createElement('span');
+            ellipsis.textContent = '…';
+            ellipsis.className = 'pagination-ellipsis';
+            paginationElement.appendChild(ellipsis);
+          } else {
+            const btn = document.createElement('button');
+            btn.textContent = item;
+            btn.className = 'page-button' + (item === currentPage ? ' active' : '');
+            btn.disabled = item === currentPage;
+            btn.addEventListener('click', () => fetchVideos(item));
+            paginationElement.appendChild(btn);
+          }
+        });
 
         // Next button
         const nextButton = document.createElement('button');
         nextButton.textContent = 'Next »';
         nextButton.disabled = !pagination.hasNextPage;
         nextButton.addEventListener('click', () => {
-          if (pagination.hasNextPage) {
-            fetchVideos(currentPage + 1);
-          }
+          if (pagination.hasNextPage) fetchVideos(currentPage + 1);
         });
         paginationElement.appendChild(nextButton);
       };
@@ -347,7 +413,17 @@
         }
       });
 
-      // Initialize the app with the page from URL or default to page 1
+      // Debounce search input: reset to page 1 on each new query
+      let searchDebounceTimer = null;
+      searchInput.addEventListener('input', () => {
+        clearTimeout(searchDebounceTimer);
+        searchDebounceTimer = setTimeout(() => {
+          currentSearch = searchInput.value.trim();
+          fetchVideos(1);
+        }, 300);
+      });
+
+      // Initialize the app with the page and search from URL or defaults
       fetchVideos(currentPage);
     });
   </script>
