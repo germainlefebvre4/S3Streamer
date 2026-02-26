@@ -8,7 +8,7 @@
     body {
       font-family: Arial, sans-serif;
       /* max-width: 90%; */
-      max-width: 1200px;
+      max-width: var(--page-max-width, 1200px);
       margin: 0 auto;
       padding: 20px;
       background-color: #f5f5f5;
@@ -24,7 +24,7 @@
     }
     .video-list {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      grid-template-columns: repeat(var(--grid-cols, 6), minmax(200px, 1fr));
       gap: 20px;
     }
     .video-item {
@@ -34,14 +34,19 @@
       box-shadow: 0 2px 5px rgba(0,0,0,0.1);
       cursor: pointer;
       transition: transform 0.2s;
+      height: 100px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      box-sizing: border-box;
     }
     .video-item:hover {
       transform: translateY(-5px);
     }
     .video-name {
       font-weight: bold;
-      margin-bottom: 8px;
-      word-break: break-all;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     .loading {
       text-align: center;
@@ -51,6 +56,28 @@
     .video-details {
       color: #666;
       font-size: 14px;
+    }
+    /* Toolbar (search + config button) */
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .toolbar .search-container {
+      flex: 1;
+    }
+    .config-btn {
+      background: transparent;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 18px;
+      padding: 8px 12px;
+      color: #555;
+      flex-shrink: 0;
+    }
+    .config-btn:hover {
+      background: #e8e8e8;
     }
     /* Search field */
     .search-container {
@@ -108,6 +135,66 @@
       font-weight: bold;
       background: #4CAF50;
       color: white;
+    }
+    /* Grid config modal */
+    .config-modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      display: none;
+      justify-content: center;
+      align-items: center;
+    }
+    .config-modal {
+      background: white;
+      border-radius: 8px;
+      padding: 30px;
+      min-width: 300px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    }
+    .config-modal h2 {
+      margin: 0 0 20px 0;
+      font-size: 18px;
+      color: #333;
+    }
+    .config-modal label {
+      display: block;
+      margin-bottom: 6px;
+      color: #555;
+      font-size: 14px;
+    }
+    .config-modal select {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 14px;
+      margin-bottom: 16px;
+      box-sizing: border-box;
+    }
+    .config-modal-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+    .config-modal-actions button {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .btn-apply {
+      background: #4CAF50;
+      color: white;
+    }
+    .btn-cancel {
+      background: #f0f0f0;
+      color: #333;
     }
     /* Full page dialog styles */
     .video-dialog {
@@ -175,13 +262,55 @@
   <div class="container">
     <div id="loading" class="loading">Loading videos from S3...</div>
 
-    <div class="search-container">
-      <input type="text" id="search-input" class="search-input" placeholder="Rechercher une vidéo…">
+    <div class="toolbar">
+      <div class="search-container">
+        <input type="text" id="search-input" class="search-input" placeholder="Rechercher une vidéo…">
+      </div>
+      <button id="config-btn" class="config-btn" title="Configuration de la grille">⚙</button>
     </div>
 
     <div id="pagination" class="pagination"></div>
 
     <div id="video-list" class="video-list"></div>
+  </div>
+
+  <!-- Grid config modal -->
+  <div id="config-modal-overlay" class="config-modal-overlay">
+    <div class="config-modal">
+      <h2>Configuration de la grille</h2>
+      <label for="config-cols">Colonnes</label>
+      <select id="config-cols">
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="3">3</option>
+        <option value="4">4</option>
+        <option value="5">5</option>
+        <option value="6">6</option>
+        <option value="7">7</option>
+        <option value="8">8</option>
+      </select>
+      <label for="config-rows">Lignes par page</label>
+      <select id="config-rows">
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="3">3</option>
+        <option value="4">4</option>
+        <option value="5">5</option>
+        <option value="6">6</option>
+      </select>
+      <label for="config-width">Largeur de la page</label>
+      <select id="config-width">
+        <option value="900px">900px</option>
+        <option value="1200px">1200px</option>
+        <option value="1400px">1400px</option>
+        <option value="1600px">1600px</option>
+        <option value="100%">Pleine largeur</option>
+      </select>
+      <div class="config-modal-actions">
+        <button id="config-cancel" class="btn-cancel">Annuler</button>
+        <button id="config-apply" class="btn-apply">Appliquer</button>
+      </div>
+    </div>
   </div>
 
   <!-- Full page video dialog -->
@@ -207,6 +336,32 @@
       const loadingElement = document.getElementById('loading');
       const paginationElement = document.getElementById('pagination');
       const searchInput = document.getElementById('search-input');
+      const configBtn = document.getElementById('config-btn');
+      const configModalOverlay = document.getElementById('config-modal-overlay');
+      const configColsSelect = document.getElementById('config-cols');
+      const configRowsSelect = document.getElementById('config-rows');
+      const configApplyBtn = document.getElementById('config-apply');
+      const configCancelBtn = document.getElementById('config-cancel');
+      const configWidthSelect = document.getElementById('config-width');
+
+      // Grid config: defaults, localStorage and CSS init
+      const GRID_CONFIG_KEY = 's3streamer_grid_config';
+      const GRID_DEFAULTS = { cols: 6, rows: 3, width: '1200px' };
+      const loadGridConfig = () => {
+        try {
+          const stored = localStorage.getItem(GRID_CONFIG_KEY);
+          if (stored) {
+            const parsed = JSON.parse(stored);
+            if (typeof parsed.cols === 'number' && typeof parsed.rows === 'number') {
+              return { ...GRID_DEFAULTS, ...parsed };
+            }
+          }
+        } catch (_) {}
+        return { ...GRID_DEFAULTS };
+      };
+      let gridConfig = loadGridConfig();
+      document.documentElement.style.setProperty('--grid-cols', gridConfig.cols);
+      document.documentElement.style.setProperty('--page-max-width', gridConfig.width);
 
       // Current state
       let currentPage = 1;
@@ -228,7 +383,7 @@
           videoList.innerHTML = '';
           paginationElement.innerHTML = '';
 
-          const params = new URLSearchParams({ page });
+          const params = new URLSearchParams({ page, pageSize: gridConfig.cols * gridConfig.rows });
           if (currentSearch) params.set('search', currentSearch);
           const response = await fetch(`/api/videos?${params}`);
           if (!response.ok) {
@@ -408,9 +563,41 @@
 
       // Close dialog on escape key
       document.addEventListener('keydown', (event) => {
-        if (event.key === 'Escape' && videoDialog.style.display === 'flex') {
-          closeVideoDialog();
+        if (event.key === 'Escape') {
+          if (videoDialog.style.display === 'flex') closeVideoDialog();
+          else if (configModalOverlay.style.display === 'flex') closeConfigModal();
         }
+      });
+
+      // Grid config modal
+      const openConfigModal = () => {
+        configColsSelect.value = gridConfig.cols;
+        configRowsSelect.value = gridConfig.rows;
+        configWidthSelect.value = gridConfig.width;
+        configModalOverlay.style.display = 'flex';
+        document.body.classList.add('dialog-open');
+      };
+      const closeConfigModal = () => {
+        configModalOverlay.style.display = 'none';
+        document.body.classList.remove('dialog-open');
+      };
+
+      configBtn.addEventListener('click', openConfigModal);
+      configCancelBtn.addEventListener('click', closeConfigModal);
+      configModalOverlay.addEventListener('click', (event) => {
+        if (event.target === configModalOverlay) closeConfigModal();
+      });
+      configApplyBtn.addEventListener('click', () => {
+        gridConfig = {
+          cols: parseInt(configColsSelect.value),
+          rows: parseInt(configRowsSelect.value),
+          width: configWidthSelect.value
+        };
+        localStorage.setItem(GRID_CONFIG_KEY, JSON.stringify(gridConfig));
+        document.documentElement.style.setProperty('--grid-cols', gridConfig.cols);
+        document.documentElement.style.setProperty('--page-max-width', gridConfig.width);
+        closeConfigModal();
+        fetchVideos(1);
       });
 
       // Debounce search input: reset to page 1 on each new query
