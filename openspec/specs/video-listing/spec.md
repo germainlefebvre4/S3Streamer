@@ -7,7 +7,7 @@ TBD - Defines the behaviour of the video listing feature, including how S3 objec
 ## Requirements
 
 ### Requirement: Récupération complète des objets S3
-Le système SHALL parcourir toutes les pages de résultats S3 en suivant les continuation tokens jusqu'à ce que `IsTruncated` soit `false`, afin d'obtenir la liste exhaustive des objets du bucket avant d'appliquer le filtrage et la pagination. Cette récupération complète SHALL être mise en cache en mémoire et réutilisée pour toutes les requêtes de pagination suivantes jusqu'à expiration du TTL.
+Le système SHALL parcourir toutes les pages de résultats S3 en suivant les continuation tokens jusqu'à ce que `IsTruncated` soit `false`, afin d'obtenir la liste exhaustive des objets du bucket avant d'appliquer le filtrage et la pagination. Cette récupération complète SHALL être mise en cache en mémoire et réutilisée pour toutes les requêtes de pagination suivantes jusqu'à expiration du TTL. Le cache SHALL également pouvoir être modifié chirurgicalement (retrait d'une entrée par `Key`) sans invalider l'ensemble du cache, notamment lors de la suppression d'un objet S3.
 
 #### Scenario: Bucket avec plus de 1000 objets
 - **WHEN** le bucket S3 contient plus de 1000 objets
@@ -26,6 +26,12 @@ Le système SHALL parcourir toutes les pages de résultats S3 en suivant les con
 - **WHEN** le cache est valide
 - **THEN** le système utilise la liste en cache sans appeler S3
 - **THEN** le filtrage par extension et la pagination sont appliqués sur la liste en cache
+
+#### Scenario: Cache mis à jour après suppression d'un objet
+- **WHEN** un objet S3 est supprimé via l'API
+- **THEN** l'entrée correspondante est retirée de `cachedContents` par comparaison de `Key`
+- **THEN** les appels suivants à `/api/videos` ne retournent plus la vidéo supprimée
+- **THEN** le reste du cache reste valide jusqu'à expiration du TTL
 
 ### Requirement: Cohérence de la pagination UI
 Le système SHALL calculer `totalPages` à partir du nombre total réel de vidéos après récupération complète et application du filtre `search`, garantissant que la navigation page par page couvre l'intégralité des résultats. L'interface SHALL afficher des boutons de pages numérotés avec une fenêtre glissante centrée sur la page courante, en plus des boutons Previous et Next. Les pages hors de la fenêtre glissante SHALL être représentées par des points de suspension (`…`). La page courante SHALL être visuellement distinguée des autres pages. Le `pageSize` utilisé pour la pagination SHALL être déterminé par la configuration de la grille (colonnes × lignes).

@@ -1,4 +1,4 @@
-import { S3Client, ListObjectsV2Command, GetObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, ListObjectsV2Command, GetObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import dotenv from 'dotenv';
 
@@ -190,5 +190,28 @@ export const streamVideo = async (req, res) => {
   } catch (error) {
     console.error('Error streaming video:', error);
     res.status(500).json({ error: 'Failed to stream video' });
+  }
+};
+
+export const deleteVideo = async (req, res) => {
+  const key = decodeURIComponent(req.params.key);
+
+  try {
+    const command = new DeleteObjectCommand({
+      Bucket: BUCKET_NAME,
+      Key: key
+    });
+
+    await s3Client.send(command);
+
+    // Surgically remove the deleted entry from the in-memory cache
+    if (cachedContents) {
+      cachedContents = cachedContents.filter(item => item.Key !== key);
+    }
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting video:', error);
+    res.status(500).json({ error: 'Failed to delete video' });
   }
 };

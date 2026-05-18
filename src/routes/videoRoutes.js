@@ -1,5 +1,5 @@
 import express from 'express';
-import { listVideos, streamVideo, listTags } from '../controllers/videoController.js';
+import { listVideos, streamVideo, listTags, deleteVideo } from '../controllers/videoController.js';
 
 const router = express.Router();
 
@@ -11,5 +11,8 @@ router.get('/tags', listTags);
 
 // Route to stream a specific video
 router.get('/stream/:key', streamVideo);
+
+// Route to delete a specific video from the bucket
+router.delete('/:key', deleteVideo);
 
 export default router;
