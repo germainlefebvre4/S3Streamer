@@ -1099,6 +1099,9 @@
               const nextPage = dialogContext.currentLoadedPage + 1;
               const params = new URLSearchParams({ page: nextPage, pageSize: dialogContext.pageSize });
               if (dialogContext.searchQuery) params.set('search', dialogContext.searchQuery);
+              if (dialogContext.sortOption && dialogContext.sortOption !== 'name_asc') {
+                params.set('sort', dialogContext.sortOption);
+              }
               const response = await fetch(`/api/videos?${params}`);
               if (!response.ok) throw new Error('Failed to fetch next page');
               const data = await response.json();
@@ -1124,6 +1127,7 @@
         dialogContext = {
           searchQuery: currentSearch,
           shuffleMode,
+          sortOption: currentSort,
           pageSize: gridConfig.cols * gridConfig.rows,
           totalPages: total,
           currentLoadedPage: loadedPage
