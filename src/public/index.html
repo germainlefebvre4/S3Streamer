@@ -966,7 +966,11 @@
             const percent = saved.currentTime / saved.duration;
             if (percent < 0.95) {
               videoPlayer.currentTime = saved.currentTime;
+            } else {
+              videoPlayer.currentTime = 0;
             }
+          } else {
+            videoPlayer.currentTime = 0;
           }
         }
         // Reset last save time on metadata loaded (new video)
@@ -1176,9 +1180,71 @@
           else if (videoDialog.style.display === 'flex') closeVideoDialog();
           else if (configModalOverlay.style.display === 'flex') closeConfigModal();
         }
-        if (videoDialog.style.display === 'flex' && event.ctrlKey) {
-          if (event.key === 'ArrowRight') { event.preventDefault(); navigateDialog('next'); }
-          else if (event.key === 'ArrowLeft') { event.preventDefault(); navigateDialog('prev'); }
+        
+        if (videoDialog.style.display === 'flex') {
+          // Conditions d'isolation : pas de raccourcis si l'utilisateur saisit du texte ou si une modale est ouverte
+          const isModalOpen = deleteModalOverlay.style.display === 'flex' || configModalOverlay.style.display === 'flex';
+          const isTyping = document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA');
+
+          if (!isModalOpen && !isTyping) {
+            // 1. Navigation inter-vidéos (Ctrl + Arrow)
+            if (event.ctrlKey) {
+              if (event.key === 'ArrowRight') { event.preventDefault(); navigateDialog('next'); }
+              else if (event.key === 'ArrowLeft') { event.preventDefault(); navigateDialog('prev'); }
+            } else {
+              // 2. Play/Pause (Espace)
+              if (event.key === ' ' || event.code === 'Space') {
+                event.preventDefault();
+                if (videoPlayer.paused) {
+                  videoPlayer.play();
+                } else {
+                  videoPlayer.pause();
+                }
+              }
+              // 3. Seek ±10s (ArrowLeft / ArrowRight seul)
+              else if (event.key === 'ArrowLeft') {
+                event.preventDefault();
+                videoPlayer.currentTime = Math.max(0, videoPlayer.currentTime - 10);
+              } else if (event.key === 'ArrowRight') {
+                event.preventDefault();
+                const duration = isNaN(videoPlayer.duration) ? 0 : videoPlayer.duration;
+                if (duration > 0) {
+                  videoPlayer.currentTime = Math.min(duration, videoPlayer.currentTime + 10);
+                }
+              }
+              // 4. Volume ±10% (ArrowUp / ArrowDown seul)
+              else if (event.key === 'ArrowUp') {
+                event.preventDefault();
+                videoPlayer.volume = Math.min(1.0, videoPlayer.volume + 0.1);
+                if (videoPlayer.muted) videoPlayer.muted = false; // Auto-unmute
+              } else if (event.key === 'ArrowDown') {
+                event.preventDefault();
+                videoPlayer.volume = Math.max(0.0, videoPlayer.volume - 0.1);
+              }
+              // 5. Mute / Unmute (M)
+              else if (event.key === 'm' || event.key === 'M') {
+                event.preventDefault();
+                videoPlayer.muted = !videoPlayer.muted;
+              }
+              // 6. Plein écran (F)
+              else if (event.key === 'f' || event.key === 'F') {
+                event.preventDefault();
+                if (!document.fullscreenElement) {
+                  if (videoPlayer.requestFullscreen) {
+                    videoPlayer.requestFullscreen();
+                  } else if (videoPlayer.webkitRequestFullscreen) {
+                    videoPlayer.webkitRequestFullscreen(); // Safari/iOS
+                  }
+                } else {
+                  if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                  } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen(); // Safari/iOS
+                  }
+                }
+              }
+            }
+          }
         }
       });
 

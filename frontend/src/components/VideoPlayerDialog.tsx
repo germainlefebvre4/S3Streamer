@@ -101,7 +101,11 @@ export function VideoPlayerDialog({
       const percent = progress.currentTime / progress.duration;
       if (percent < 0.95) {
         videoEl.currentTime = progress.currentTime;
+      } else {
+        videoEl.currentTime = 0;
       }
+    } else {
+      videoEl.currentTime = 0;
     }
     lastSaveTimeRef.current = Date.now();
   };
