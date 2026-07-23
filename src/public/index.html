@@ -106,6 +106,28 @@
       border-color: #4CAF50;
       box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
     }
+    /* Sort dropdown */
+    .sort-select {
+      padding: 8px 12px;
+      font-size: 15px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      outline: none;
+      background: white;
+      color: #333;
+      height: 40px;
+      box-sizing: border-box;
+      cursor: pointer;
+    }
+    .sort-select:focus {
+      border-color: #4CAF50;
+      box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+    }
+    .sort-select:disabled {
+      background: #f5f5f5;
+      color: #aaa;
+      cursor: not-allowed;
+    }
     /* New styles for pagination */
     .pagination {
       display: flex;
@@ -479,6 +501,12 @@
       <div class="search-container">
         <input type="text" id="search-input" class="search-input" placeholder="Rechercher une vidéo…">
       </div>
+      <select id="sort-select" class="sort-select" title="Trier par...">
+        <option value="name_asc">Nom (A-Z)</option>
+        <option value="name_desc">Alphabétique inverse</option>
+        <option value="date_desc">Date de modification (plus récent)</option>
+        <option value="size_desc">Taille du fichier</option>
+      </select>
       <button id="shuffle-btn" class="config-btn" title="Mode aléatoire">🔀</button>
       <button id="config-btn" class="config-btn" title="Configuration de la grille">⚙</button>
     </div>
@@ -575,6 +603,7 @@
       const loadingElement = document.getElementById('loading');
       const paginationElement = document.getElementById('pagination');
       const searchInput = document.getElementById('search-input');
+      const sortSelect = document.getElementById('sort-select');
       const configBtn = document.getElementById('config-btn');
       const configModalOverlay = document.getElementById('config-modal-overlay');
       const configColsSelect = document.getElementById('config-cols');
@@ -675,6 +704,9 @@
       // Run automatic 30-day garbage collection routine on application load
       PlaybackTracker.cleanup();
 
+      // State transition lock to prevent async state leakage when switching videos
+      let isTransitioning = false;
+
       // Dynamic progress sync
       const updateCardProgress = (key, currentTime, duration) => {
         const percent = (currentTime / duration) * 100;
@@ -700,6 +732,7 @@
       let totalPages = 1;
       let currentSearch = '';
       let shuffleMode = false;
+      let currentSort = 'name_asc';
 
       // Dialog navigation state
       let dialogBuffer = [];
@@ -714,6 +747,10 @@
         currentSearch = urlParams.get('search') || '';
         searchInput.value = currentSearch;
       }
+      if (urlParams.has('sort')) {
+        currentSort = urlParams.get('sort') || 'name_asc';
+        if (sortSelect) sortSelect.value = currentSort;
+      }
 
       // Fetch videos from our API with pagination
       const fetchVideos = async (page = 1) => {
@@ -724,7 +761,11 @@
 
           const params = new URLSearchParams({ page, pageSize: gridConfig.cols * gridConfig.rows });
           if (currentSearch) params.set('search', currentSearch);
-          if (shuffleMode) params.set('shuffle', 'true');
+          if (shuffleMode) {
+            params.set('shuffle', 'true');
+          } else if (currentSort && currentSort !== 'name_asc') {
+            params.set('sort', currentSort);
+          }
           const response = await fetch(`/api/videos?${params}`);
           if (!response.ok) {
             throw new Error('Failed to fetch videos');
@@ -800,8 +841,8 @@
           // Update pagination
           updatePagination(data.pagination);
 
-          // Update browser URL with current page
-          updateURLWithPage(page);
+          // Update browser URL with current params
+          updateURLWithParams(page);
 
         } catch (error) {
           console.error('Error fetching videos:', error);
@@ -809,8 +850,8 @@
         }
       };
 
-      // Update URL with current page and search as query parameters
-      const updateURLWithPage = (page) => {
+      // Update URL with current page, search and sort as query parameters
+      const updateURLWithParams = (page) => {
         const url = new URL(window.location);
         if (page === 1) {
           url.searchParams.delete('page');
@@ -821,6 +862,11 @@
           url.searchParams.set('search', currentSearch);
         } else {
           url.searchParams.delete('search');
+        }
+        if (currentSort && currentSort !== 'name_asc' && !shuffleMode) {
+          url.searchParams.set('sort', currentSort);
+        } else {
+          url.searchParams.delete('sort');
         }
         window.history.replaceState({}, '', url);
       };
@@ -850,8 +896,24 @@
       shuffleBtn.addEventListener('click', () => {
         shuffleMode = !shuffleMode;
         shuffleBtn.classList.toggle('active', shuffleMode);
+        if (sortSelect) {
+          sortSelect.disabled = shuffleMode;
+        }
         fetchVideos(1);
       });
+
+      // Sort select change
+      if (sortSelect) {
+        sortSelect.addEventListener('change', () => {
+          currentSort = sortSelect.value;
+          if (shuffleMode) {
+            shuffleMode = false;
+            shuffleBtn.classList.remove('active');
+            sortSelect.disabled = false;
+          }
+          fetchVideos(1);
+        });
+      }
 
       // Create pagination controls
       const updatePagination = (pagination) => {
@@ -908,6 +970,7 @@
 
       // Play video at the given buffer index
       const playVideoAtIndex = (index) => {
+        isTransitioning = true; // Lock events during async source transition
         const video = dialogBuffer[index];
         const fileName = video.key.split('/').pop();
         videoPlayer.src = video.streamUrl;
@@ -959,6 +1022,7 @@
       let lastSaveTime = 0;
 
       videoPlayer.addEventListener('loadedmetadata', () => {
+        isTransitioning = false; // Release the lock
         const video = dialogBuffer[dialogAbsoluteIndex];
         if (video) {
           const saved = PlaybackTracker.get(video.key);
@@ -978,6 +1042,7 @@
       });
 
       videoPlayer.addEventListener('timeupdate', () => {
+        if (isTransitioning) return; // Ignore residual events during video transitions
         const video = dialogBuffer[dialogAbsoluteIndex];
         if (!video) return;
 
@@ -1001,6 +1066,7 @@
       });
 
       videoPlayer.addEventListener('pause', () => {
+        if (isTransitioning) return; // Ignore residual events during video transitions
         saveCurrentVideoProgress();
       });
 
@@ -1070,7 +1136,8 @@
 
       // Close video dialog
       const closeVideoDialog = () => {
-        saveCurrentVideoProgress();
+        if (!isTransitioning) saveCurrentVideoProgress();
+        isTransitioning = false;
         videoPlayer.pause();
         videoPlayer.src = '';
         videoDialog.style.display = 'none';

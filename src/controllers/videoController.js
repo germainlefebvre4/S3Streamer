@@ -31,10 +31,11 @@ let cacheExpiresAt = 0;
 // List all videos in the bucket with pagination
 export const listVideos = async (req, res) => {
   try {
-    // Extract pagination and search parameters from query
+    // Extract pagination, search and sort parameters from query
     const page = parseInt(req.query.page) || 1;
     const pageSize = parseInt(req.query.pageSize) || DEFAULT_PAGE_SIZE;
     const search = (req.query.search || '').trim().toLowerCase();
+    const sortBy = req.query.sort || 'name_asc';
 
     // Use cached S3 object list if still valid, otherwise fetch from S3
     let allContents;
@@ -90,10 +91,27 @@ export const listVideos = async (req, res) => {
       paginatedVideos = shuffled.slice(0, pageSize);
       pagination = { page: 1, pageSize, totalPages: 1, totalVideos, hasNextPage: false, hasPrevPage: false };
     } else {
+      // Sort filtered videos before paginating
+      const sortedVideos = [...filteredVideos];
+      if (sortBy === 'name_desc') {
+        sortedVideos.sort((a, b) => (b.Key || '').localeCompare(a.Key || '', undefined, { numeric: true, sensitivity: 'base' }));
+      } else if (sortBy === 'date_desc') {
+        sortedVideos.sort((a, b) => {
+          const timeA = a.LastModified ? new Date(a.LastModified).getTime() : 0;
+          const timeB = b.LastModified ? new Date(b.LastModified).getTime() : 0;
+          return timeB - timeA;
+        });
+      } else if (sortBy === 'size_desc') {
+        sortedVideos.sort((a, b) => (b.Size || 0) - (a.Size || 0));
+      } else {
+        // default: name_asc (A-Z natural sort)
+        sortedVideos.sort((a, b) => (a.Key || '').localeCompare(b.Key || '', undefined, { numeric: true, sensitivity: 'base' }));
+      }
+
       const totalPages = Math.ceil(totalVideos / pageSize);
       const startIndex = (page - 1) * pageSize;
       const endIndex = Math.min(startIndex + pageSize, totalVideos);
-      paginatedVideos = filteredVideos.slice(startIndex, endIndex);
+      paginatedVideos = sortedVideos.slice(startIndex, endIndex);
       pagination = { page, pageSize, totalPages, totalVideos, hasNextPage: page < totalPages, hasPrevPage: page > 1 };
     }
 

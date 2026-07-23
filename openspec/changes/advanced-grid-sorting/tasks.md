@@ -1,8 +1,8 @@
 ## 1. Backend Implementation
 
-- [ ] 1.1 Extraire le paramètre de requête `sort` (valeur par défaut : `name_asc`) dans le contrôleur `src/controllers/videoController.js`.
-- [ ] 1.2 Implémenter la logique de tri sur la liste `filteredVideos` en mémoire (avant le découpage de pagination) selon les différentes options : `name_asc`, `name_desc`, `date_desc`, `size_desc`.
-- [ ] 1.3 Assurer la stabilité du tri en prévoyant des valeurs par défaut pour les objets S3 manquants (propriétés `Size` ou `LastModified` indéfinies).
+- [x] 1.1 Extraire le paramètre de requête `sort` (valeur par défaut : `name_asc`) dans le contrôleur `src/controllers/videoController.js`.
+- [x] 1.2 Implémenter la logique de tri sur la liste `filteredVideos` en mémoire (avant le découpage de pagination) selon les différentes options : `name_asc`, `name_desc`, `date_desc`, `size_desc`.
+- [x] 1.3 Assurer la stabilité du tri en prévoyant des valeurs par défaut pour les objets S3 manquants (propriétés `Size` ou `LastModified` indéfinies).
 
 ## 2. Frontend UI & Layout
 

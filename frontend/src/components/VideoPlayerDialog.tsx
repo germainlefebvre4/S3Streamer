@@ -63,9 +63,13 @@ export function VideoPlayerDialog({
   const lastSaveTimeRef = useRef<number>(0);
   const activeVideoKeyRef = useRef<string | null>(null);
   const activeVideoRef = useRef<HTMLVideoElement | null>(null);
+  const isTransitioningRef = useRef<boolean>(false);
 
   useEffect(() => {
     if (video) {
+      if (activeVideoKeyRef.current !== video.key) {
+         isTransitioningRef.current = true; // Lock events across video changes
+      }
       activeVideoKeyRef.current = video.key;
     }
   }, [video]);
@@ -96,6 +100,7 @@ export function VideoPlayerDialog({
   }, [video?.key, onSaveProgress, onClearProgress]);
 
   const handleLoadedMetadata = (e: React.SyntheticEvent<HTMLVideoElement>) => {
+    isTransitioningRef.current = false; // Release the lock
     const videoEl = e.currentTarget;
     if (progress && progress.duration) {
       const percent = progress.currentTime / progress.duration;
@@ -111,6 +116,7 @@ export function VideoPlayerDialog({
   };
 
   const handleTimeUpdate = (e: React.SyntheticEvent<HTMLVideoElement>) => {
+    if (isTransitioningRef.current) return; // Ignore events during transition
     if (!video) return;
     const videoEl = e.currentTarget;
     const currentTime = videoEl.currentTime;
@@ -131,6 +137,7 @@ export function VideoPlayerDialog({
   };
 
   const handlePause = (e: React.SyntheticEvent<HTMLVideoElement>) => {
+    if (isTransitioningRef.current) return; // Ignore events during transition
     if (!video) return;
     const videoEl = e.currentTarget;
     const currentTime = videoEl.currentTime;
