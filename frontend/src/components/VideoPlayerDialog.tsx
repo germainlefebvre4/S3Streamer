@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import { X, Trash2, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import type { Video } from '../hooks/useFetchVideos';
@@ -14,6 +14,9 @@ interface VideoPlayerDialogProps {
   isLoadingPrev: boolean;
   isLoadingNext: boolean;
   onDeleteVideo: (key: string) => Promise<boolean>;
+  onSaveProgress: (key: string, currentTime: number, duration: number) => void;
+  onClearProgress: (key: string) => void;
+  progress?: { currentTime: number; duration: number; updatedAt: number };
 }
 
 export function VideoPlayerDialog({
@@ -27,6 +30,9 @@ export function VideoPlayerDialog({
   isLoadingPrev,
   isLoadingNext,
   onDeleteVideo,
+  onSaveProgress,
+  onClearProgress,
+  progress,
 }: VideoPlayerDialogProps) {
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -52,6 +58,93 @@ export function VideoPlayerDialog({
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [open, isConfirmOpen, hasPrev, hasNext, isLoadingPrev, isLoadingNext, onNavigatePrev, onNavigateNext]);
+
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const lastSaveTimeRef = useRef<number>(0);
+  const activeVideoKeyRef = useRef<string | null>(null);
+  const activeVideoRef = useRef<HTMLVideoElement | null>(null);
+
+  useEffect(() => {
+    if (video) {
+      activeVideoKeyRef.current = video.key;
+    }
+  }, [video]);
+
+  useEffect(() => {
+    if (videoRef.current) {
+      activeVideoRef.current = videoRef.current;
+    }
+  });
+
+  useEffect(() => {
+    return () => {
+      const key = activeVideoKeyRef.current;
+      const videoEl = activeVideoRef.current;
+      if (key && videoEl) {
+        const currentTime = videoEl.currentTime;
+        const duration = videoEl.duration;
+        if (duration && !isNaN(duration)) {
+          const percent = currentTime / duration;
+          if (percent < 0.95) {
+            onSaveProgress(key, currentTime, duration);
+          } else {
+            onClearProgress(key);
+          }
+        }
+      }
+    };
+  }, [video?.key, onSaveProgress, onClearProgress]);
+
+  const handleLoadedMetadata = (e: React.SyntheticEvent<HTMLVideoElement>) => {
+    const videoEl = e.currentTarget;
+    if (progress && progress.duration) {
+      const percent = progress.currentTime / progress.duration;
+      if (percent < 0.95) {
+        videoEl.currentTime = progress.currentTime;
+      }
+    }
+    lastSaveTimeRef.current = Date.now();
+  };
+
+  const handleTimeUpdate = (e: React.SyntheticEvent<HTMLVideoElement>) => {
+    if (!video) return;
+    const videoEl = e.currentTarget;
+    const currentTime = videoEl.currentTime;
+    const duration = videoEl.duration;
+    if (!duration || isNaN(duration)) return;
+
+    const percent = currentTime / duration;
+    if (percent >= 0.95) {
+      onClearProgress(video.key);
+      return;
+    }
+
+    const now = Date.now();
+    if (now - lastSaveTimeRef.current >= 5000) {
+      onSaveProgress(video.key, currentTime, duration);
+      lastSaveTimeRef.current = now;
+    }
+  };
+
+  const handlePause = (e: React.SyntheticEvent<HTMLVideoElement>) => {
+    if (!video) return;
+    const videoEl = e.currentTarget;
+    const currentTime = videoEl.currentTime;
+    const duration = videoEl.duration;
+    if (!duration || isNaN(duration)) return;
+
+    const percent = currentTime / duration;
+    if (percent < 0.95) {
+      onSaveProgress(video.key, currentTime, duration);
+    } else {
+      onClearProgress(video.key);
+    }
+  };
+
+  const handleEnded = () => {
+    if (!video) return;
+    onClearProgress(video.key);
+  };
 
   if (!video) return null;
 
@@ -104,11 +197,16 @@ export function VideoPlayerDialog({
               
               {/* Native Video Player */}
               <video
+                ref={videoRef}
                 key={video.key} // Force re-render on video change to refresh stream
                 src={video.streamUrl}
                 controls
                 autoPlay
                 className="w-full h-full max-h-[70vh] rounded-xl z-10"
+                onLoadedMetadata={handleLoadedMetadata}
+                onTimeUpdate={handleTimeUpdate}
+                onPause={handlePause}
+                onEnded={handleEnded}
               />
 
               {/* LATERAL NAVIGATION ZONES */}

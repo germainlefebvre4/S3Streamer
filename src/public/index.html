@@ -451,6 +451,22 @@
       border-color: white;
       color: white;
     }
+    /* Progress bar styles */
+    .video-progress-container {
+      width: 100%;
+      height: 4px;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 2px;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+    .video-progress-fill {
+      height: 100%;
+      background: #10b981; /* Emerald */
+      box-shadow: 0 0 8px #10b981;
+      width: 0%;
+      transition: width 0.1s ease;
+    }
   </style>
 </head>
 <body>
@@ -595,6 +611,90 @@
       document.documentElement.style.setProperty('--grid-cols', gridConfig.cols);
       document.documentElement.style.setProperty('--page-max-width', gridConfig.width);
 
+      // Playback Tracking helper
+      const PLAYBACK_PROGRESS_KEY = 's3streamer_playback_progress';
+      const PlaybackTracker = {
+        getAll() {
+          try {
+            const stored = localStorage.getItem(PLAYBACK_PROGRESS_KEY);
+            return stored ? JSON.parse(stored) : {};
+          } catch (e) {
+            console.error('Error parsing playback progress:', e);
+            return {};
+          }
+        },
+        save(key, currentTime, duration) {
+          try {
+            const all = this.getAll();
+            all[key] = {
+              currentTime,
+              duration,
+              updatedAt: Date.now()
+            };
+            localStorage.setItem(PLAYBACK_PROGRESS_KEY, JSON.stringify(all));
+          } catch (e) {
+            console.error('Error saving playback progress:', e);
+          }
+        },
+        get(key) {
+          const all = this.getAll();
+          return all[key] || null;
+        },
+        clear(key) {
+          try {
+            const all = this.getAll();
+            if (all[key]) {
+              delete all[key];
+              localStorage.setItem(PLAYBACK_PROGRESS_KEY, JSON.stringify(all));
+            }
+          } catch (e) {
+            console.error('Error clearing playback progress:', e);
+          }
+        },
+        cleanup() {
+          try {
+            const all = this.getAll();
+            const now = Date.now();
+            const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
+            let changed = false;
+            for (const key in all) {
+              if (all[key] && now - all[key].updatedAt > thirtyDaysMs) {
+                delete all[key];
+                changed = true;
+              }
+            }
+            if (changed) {
+              localStorage.setItem(PLAYBACK_PROGRESS_KEY, JSON.stringify(all));
+            }
+          } catch (e) {
+            console.error('Error in garbage collection:', e);
+          }
+        }
+      };
+
+      // Run automatic 30-day garbage collection routine on application load
+      PlaybackTracker.cleanup();
+
+      // Dynamic progress sync
+      const updateCardProgress = (key, currentTime, duration) => {
+        const percent = (currentTime / duration) * 100;
+        const progressContainer = document.querySelector(`.video-progress-container[data-video-key="${CSS.escape(key)}"]`);
+        if (progressContainer) {
+          const progressFill = progressContainer.querySelector('.video-progress-fill');
+          if (percent < 95) {
+            progressContainer.style.display = 'block';
+            if (progressFill) {
+              progressFill.style.width = `${percent}%`;
+            }
+          } else {
+            progressContainer.style.display = 'none';
+            if (progressFill) {
+              progressFill.style.width = '0%';
+            }
+          }
+        }
+      };
+
       // Current state
       let currentPage = 1;
       let totalPages = 1;
@@ -655,12 +755,39 @@
             // Format date
             const formattedDate = new Date(video.lastModified).toLocaleDateString();
 
+            // Check if there is saved playback progress
+            const savedProgress = PlaybackTracker.get(video.key);
+            let progressBarHtml = '';
+            if (savedProgress && savedProgress.duration) {
+              const percent = (savedProgress.currentTime / savedProgress.duration) * 100;
+              if (percent < 95) {
+                progressBarHtml = `
+                  <div class="video-progress-container" data-video-key="${video.key}">
+                    <div class="video-progress-fill" style="width: ${percent}%"></div>
+                  </div>
+                `;
+              } else {
+                progressBarHtml = `
+                  <div class="video-progress-container" data-video-key="${video.key}" style="display: none;">
+                    <div class="video-progress-fill" style="width: 0%"></div>
+                  </div>
+                `;
+              }
+            } else {
+              progressBarHtml = `
+                <div class="video-progress-container" data-video-key="${video.key}" style="display: none;">
+                  <div class="video-progress-fill" style="width: 0%"></div>
+                </div>
+              `;
+            }
+
             videoItem.innerHTML = `
               <div class="video-name">${fileName}</div>
               <div class="video-details">
                 <div>Size: ${fileSizeInMB} MB</div>
                 <div>Modified: ${formattedDate}</div>
               </div>
+              ${progressBarHtml}
             `;
 
             videoItem.addEventListener('click', () => {
@@ -809,9 +936,82 @@
         }
       };
 
+      // Save current video progress
+      const saveCurrentVideoProgress = () => {
+        const video = dialogBuffer[dialogAbsoluteIndex];
+        if (video && videoPlayer.src) {
+          const currentTime = videoPlayer.currentTime;
+          const duration = videoPlayer.duration;
+          if (duration && !isNaN(duration)) {
+            const percent = currentTime / duration;
+            if (percent < 0.95) {
+              PlaybackTracker.save(video.key, currentTime, duration);
+              updateCardProgress(video.key, currentTime, duration);
+            } else {
+              PlaybackTracker.clear(video.key);
+              updateCardProgress(video.key, currentTime, duration);
+            }
+          }
+        }
+      };
+
+      // Video Player Event Listeners
+      let lastSaveTime = 0;
+
+      videoPlayer.addEventListener('loadedmetadata', () => {
+        const video = dialogBuffer[dialogAbsoluteIndex];
+        if (video) {
+          const saved = PlaybackTracker.get(video.key);
+          if (saved) {
+            const percent = saved.currentTime / saved.duration;
+            if (percent < 0.95) {
+              videoPlayer.currentTime = saved.currentTime;
+            }
+          }
+        }
+        // Reset last save time on metadata loaded (new video)
+        lastSaveTime = Date.now();
+      });
+
+      videoPlayer.addEventListener('timeupdate', () => {
+        const video = dialogBuffer[dialogAbsoluteIndex];
+        if (!video) return;
+
+        const currentTime = videoPlayer.currentTime;
+        const duration = videoPlayer.duration;
+        if (!duration || isNaN(duration)) return;
+
+        const percent = currentTime / duration;
+        if (percent >= 0.95) {
+          PlaybackTracker.clear(video.key);
+          updateCardProgress(video.key, currentTime, duration);
+          return;
+        }
+
+        const now = Date.now();
+        if (now - lastSaveTime >= 5000) {
+          PlaybackTracker.save(video.key, currentTime, duration);
+          updateCardProgress(video.key, currentTime, duration);
+          lastSaveTime = now;
+        }
+      });
+
+      videoPlayer.addEventListener('pause', () => {
+        saveCurrentVideoProgress();
+      });
+
+      videoPlayer.addEventListener('ended', () => {
+        const video = dialogBuffer[dialogAbsoluteIndex];
+        if (video) {
+          PlaybackTracker.clear(video.key);
+          updateCardProgress(video.key, 0, 1);
+        }
+      });
+
       // Navigate to prev/next video in the dialog buffer
       const navigateDialog = async (direction) => {
         if (isLoadingPage) return;
+        saveCurrentVideoProgress();
         if (direction === 'prev') {
           if (dialogAbsoluteIndex > 0) {
             dialogAbsoluteIndex--;
@@ -866,6 +1066,7 @@
 
       // Close video dialog
       const closeVideoDialog = () => {
+        saveCurrentVideoProgress();
         videoPlayer.pause();
         videoPlayer.src = '';
         videoDialog.style.display = 'none';
@@ -951,6 +1152,7 @@
 
       dialogShuffleBtn.addEventListener('click', async () => {
         if (!shuffleMode || !dialogContext) return;
+        saveCurrentVideoProgress();
         try {
           const params = new URLSearchParams({ shuffle: 'true', pageSize: dialogContext.pageSize });
           if (dialogContext.searchQuery) params.set('search', dialogContext.searchQuery);

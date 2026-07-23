@@ -8,9 +8,10 @@ interface VideoGridProps {
   cols: number;
   loading: boolean;
   onVideoSelect: (video: Video) => void;
+  playbackProgress: Record<string, { currentTime: number; duration: number; updatedAt: number }>;
 }
 
-export function VideoGrid({ videos, cols, loading, onVideoSelect }: VideoGridProps) {
+export function VideoGrid({ videos, cols, loading, onVideoSelect, playbackProgress }: VideoGridProps) {
   const [isDesktop, setIsDesktop] = useState(true);
 
   useEffect(() => {
@@ -73,6 +74,7 @@ export function VideoGrid({ videos, cols, loading, onVideoSelect }: VideoGridPro
           key={video.key}
           video={video}
           onClick={() => onVideoSelect(video)}
+          progress={playbackProgress[video.key]}
         />
       ))}
     </div>

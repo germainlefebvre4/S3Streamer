@@ -15,6 +15,56 @@ export default function App() {
   // 1. Grid Configuration Hook
   const [config, setConfig] = useGridConfig();
 
+  // Playback Progress State & Garbage Collection
+  const [playbackProgress, setPlaybackProgress] = useState<Record<string, { currentTime: number; duration: number; updatedAt: number }>>(() => {
+    try {
+      const stored = localStorage.getItem('s3streamer_playback_progress');
+      if (stored) {
+        const all = JSON.parse(stored);
+        const now = Date.now();
+        const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
+        let changed = false;
+        for (const key in all) {
+          if (all[key] && now - all[key].updatedAt > thirtyDaysMs) {
+            delete all[key];
+            changed = true;
+          }
+        }
+        if (changed) {
+          localStorage.setItem('s3streamer_playback_progress', JSON.stringify(all));
+        }
+        return all;
+      }
+    } catch {
+      // Ignore parse errors and return default empty object
+    }
+    return {};
+  });
+
+  const saveProgress = (key: string, currentTime: number, duration: number) => {
+    setPlaybackProgress((prev) => {
+      const next = {
+        ...prev,
+        [key]: {
+          currentTime,
+          duration,
+          updatedAt: Date.now(),
+        },
+      };
+      localStorage.setItem('s3streamer_playback_progress', JSON.stringify(next));
+      return next;
+    });
+  };
+
+  const clearProgress = (key: string) => {
+    setPlaybackProgress((prev) => {
+      const next = { ...prev };
+      delete next[key];
+      localStorage.setItem('s3streamer_playback_progress', JSON.stringify(next));
+      return next;
+    });
+  };
+
   // 2. Query/Page States (with URL search sync)
   const [search, setSearch] = useState(() => {
     const params = new URLSearchParams(window.location.search);
@@ -187,6 +237,7 @@ export default function App() {
             cols={config.cols}
             loading={loading && !pendingVideoSelect}
             onVideoSelect={setActiveVideo}
+            playbackProgress={playbackProgress}
           />
         </div>
 
@@ -234,6 +285,9 @@ export default function App() {
         isLoadingPrev={isLoadingPrev}
         isLoadingNext={isLoadingNext}
         onDeleteVideo={handleDeleteVideo}
+        onSaveProgress={saveProgress}
+        onClearProgress={clearProgress}
+        progress={activeVideo ? playbackProgress[activeVideo.key] : undefined}
       />
     </div>
   );

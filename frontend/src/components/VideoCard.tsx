@@ -4,9 +4,10 @@ import type { Video } from '../hooks/useFetchVideos';
 interface VideoCardProps {
   video: Video;
   onClick: () => void;
+  progress?: { currentTime: number; duration: number; updatedAt: number };
 }
 
-export function VideoCard({ video, onClick }: VideoCardProps) {
+export function VideoCard({ video, onClick, progress }: VideoCardProps) {
   // Extract filename from the key
   const fileName = video.key.split('/').pop() || video.key;
 
@@ -15,6 +16,9 @@ export function VideoCard({ video, onClick }: VideoCardProps) {
 
   // Format date
   const formattedDate = new Date(video.lastModified).toLocaleDateString();
+
+  const percent = progress && progress.duration ? (progress.currentTime / progress.duration) * 100 : 0;
+  const showProgress = progress && percent < 95;
 
   return (
     <div
@@ -41,6 +45,16 @@ export function VideoCard({ video, onClick }: VideoCardProps) {
           </span>
         </div>
       </div>
+
+      {/* Glowing Emerald Progress Bar */}
+      {showProgress && (
+        <div className="w-full h-1.5 bg-slate-950/60 rounded-full overflow-hidden mt-2 shadow-inner">
+          <div
+            className="h-full bg-emerald-500 shadow-[0_0_8px_#10b981] rounded-full transition-all duration-300"
+            style={{ width: `${percent}%` }}
+          />
+        </div>
+      )}
 
       {/* Metadata section aligned at bottom */}
       <div className="flex items-center justify-between pt-3 border-t border-slate-900/60 mt-4 text-xs font-semibold text-slate-500 group-hover:text-slate-400 transition-colors">
