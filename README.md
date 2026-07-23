@@ -47,7 +47,7 @@ pnpm install
 ### Development Mode
 
 ```bash
-pnpm run dev
+pnpm dev
 ```
 
 This will start the server with nodemon, which will automatically restart on file changes.

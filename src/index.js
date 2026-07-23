@@ -18,14 +18,19 @@ const __dirname = path.dirname(__filename);
 // Middleware
 app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
+
+// Serve compiled production static files from frontend/dist
+app.use(express.static(path.join(__dirname, '..', 'frontend', 'dist')));
 
 // Routes
 app.use('/api/videos', videoRoutes);
 
-// Serve the HTML page
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+// Serve the frontend entry index.html for all non-API paths (SPA fallback)
+app.get('/{*splat}', (req, res) => {
+  if (req.path.startsWith('/api')) {
+    return res.status(404).json({ error: 'Not Found' });
+  }
+  res.sendFile(path.join(__dirname, '..', 'frontend', 'dist', 'index.html'));
 });
 
 // Start the server

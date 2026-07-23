@@ -20,7 +20,7 @@ Lorsqu'une vidéo est ouverte depuis la grille, le dialog SHALL initialiser un b
 - **THEN** le buffer est réinitialisé avec les vidéos de la page courante au moment du nouveau clic
 
 ### Requirement: Zones de navigation latérales dans le dialog
-Le dialog SHALL afficher deux zones cliquables pleine hauteur positionnées sur les côtés gauche et droit, contenant chacune une icône chevron SVG. Ces zones SHALL avoir une opacité réduite au repos et pleine au survol. La zone gauche SHALL être désactivée (invisible, non-cliquable) quand la vidéo courante est la première du buffer sans page précédente. La zone droite SHALL être désactivée quand la vidéo courante est la dernière du buffer et qu'il n'existe pas de page suivante. Pendant le chargement d'une page adjacente, la zone concernée SHALL afficher un état de chargement.
+Le dialog (construit avec `Radix Dialog`) SHALL afficher deux zones cliquables pleine hauteur positionnées sur les côtés gauche et droit, contenant chacune une icône chevron moderne (Lucide React). Ces zones SHALL avoir une opacité réduite au repos et pleine au survol, avec une transition CSS fluide. La zone gauche SHALL être invisible et non-cliquable quand la vidéo courante est la première du buffer sans page précédente. La zone droite SHALL être invisible et non-cliquable quand la vidéo courante est la dernière du buffer et qu'il n'existe pas de page suivante. Pendant le chargement d'une page adjacente, la zone concernée SHALL afficher un état de chargement (spinner).
 
 #### Scenario: Navigation vers la vidéo suivante
 - **WHEN** l'utilisateur clique sur la zone de navigation droite
@@ -55,7 +55,7 @@ Lorsque l'utilisateur navigue vers la droite depuis la dernière vidéo du buffe
 - **THEN** l'appel API utilise le même mode (shuffle ou non) capturé à l'ouverture
 
 ### Requirement: Navigation clavier dans le dialog
-Lorsque le dialog est ouvert, le système SHALL intercepter les touches `Ctrl+ArrowLeft` et `Ctrl+ArrowRight` pour naviguer entre les vidéos (comportement identique aux zones cliquables), et SHALL appeler `preventDefault()` sur ces événements pour éviter les conflits avec la navigation du navigateur. Les touches `ArrowLeft` et `ArrowRight` sans modificateur SHALL être laissées au comportement natif du player vidéo (seek). La touche `Escape` SHALL fermer le dialog.
+Lorsque le dialog `Radix Dialog` est ouvert, le système SHALL intercepter les touches `Ctrl+ArrowLeft` et `Ctrl+ArrowRight` pour naviguer entre les vidéos (comportement identique aux zones cliquables), et SHALL appeler `preventDefault()` sur ces événements pour éviter les conflits avec le navigateur. Les touches `ArrowLeft` et `ArrowRight` sans modificateur SHALL être laissées au comportement natif du player vidéo (seek). La touche `Escape` ou un clic sur l'overlay extérieur de Radix SHALL fermer le dialog.
 
 #### Scenario: Navigation clavier vers la droite
 - **WHEN** le dialog est ouvert et l'utilisateur appuie sur `Ctrl+ArrowRight`
@@ -67,11 +67,11 @@ Lorsque le dialog est ouvert, le système SHALL intercepter les touches `Ctrl+Ar
 
 #### Scenario: Seek natif non perturbé
 - **WHEN** le dialog est ouvert et l'utilisateur appuie sur `ArrowRight` sans `Ctrl`
-- **THEN** le player vidéo avance nativement (seek +5s par défaut du navigateur)
+- **THEN** le player vidéo avance nativement (seek)
 - **THEN** aucune navigation vers la vidéo suivante ne se produit
 
-#### Scenario: Fermeture par Escape
-- **WHEN** le dialog est ouvert et l'utilisateur appuie sur `Escape`
+#### Scenario: Fermeture par Escape ou clic overlay
+- **WHEN** le dialog est ouvert et l'utilisateur appuie sur `Escape` ou clique sur l'overlay Radix
 - **THEN** le dialog se ferme et la lecture s'arrête
 
 ### Requirement: Bouton Vidéo au hasard dans le dialog
